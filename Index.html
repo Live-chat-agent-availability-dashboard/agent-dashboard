@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Agent Availability Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin:16px; }
+    h2 { margin-top:24px; margin-bottom:6px; }
+    table { border-collapse: collapse; width:100%; margin-top:20px; }
+    th, td { border:1px solid #999; padding:10px; text-align:center; }
+    th { background-color:#f2f2f2; }
+    .time-header { margin-top:10px; font-size:16px; font-weight:bold; }
+    button { cursor:pointer; border-radius:4px; border:none; padding:6px 12px; }
+    button.delete-btn { background-color:#e74c3c; color:white; }
+    button.add-btn { background-color:#2ecc71; color:white; }
+    .toggle-btn { background-color:#3498db; color:white; margin-top:20px; padding:10px 15px; font-weight:bold; border-radius:5px; border:none; }
+    .toggle-btn:hover { background-color:#2980b9; }
+    .legend { margin:8px 0 20px; display:flex; gap:12px; align-items:center; }
+    .swatch { width:16px; height:16px; display:inline-block; border:1px solid #aaa; margin-right:6px; }
+    #dashboardContainer { overflow-x:auto; }
+    #dashboard { width:2400px; height:500px; }
+    .delete-slot { color:red; cursor:pointer; margin-left:4px; font-weight:bold; }
+    .delete-slot:hover { color:#b30000; }
+    .hint { font-size:12px; color:#555; margin:6px 0; }
+    .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    select, input[type="text"] { padding:6px 8px; }
+  </style>
+</head>
+<body>
+
+<h2>Agent Status Table</h2>
+<div id="onlineCount" style="font-weight:bold; margin-bottom:10px;">Agents Online: 0</div>
+<div id="localTime" class="time-header"></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Agent</th>
+      <th>Time Zone</th>
+      <th>Current Time</th>
+      <th>Status</th>
+      <th>Availability Slots (IST)</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="agentTableBody"></tbody>
+</table>
+
+<!-- Add new agent -->
+<button id="toggleAddAgent" class="toggle-btn">Show Add New Agent</button>
+<div id="addAgentForm" style="display:none;">
+  <h3>Add New Agent</h3>
+  <form id="formAddAgent">
+    <label>Name: <input type="text" id="newAgentName" required></label><br><br>
+    <label>Time Zone:
+      <select id="newAgentTimezone" required>
+        <option value="America/New_York">America/New_York</option>
+        <option value="America/Los_Angeles">America/Los_Angeles</option>
+        <option value="Asia/Kolkata">Asia/Kolkata</option>
+      </select>
+    </label><br><br>
+    <label>Availability (IST): 
+      <input type="text" id="newAgentAvailability" placeholder="e.g. 09:00-11:00, 14:00-15:30" required>
+    </label><br><br>
+    <button class="add-btn" type="submit">Add Agent</button>
+  </form>
+</div>
+
+<!-- Add time slot -->
+<button id="toggleAddTime" class="toggle-btn">Show Add New Time Slot</button>
+<div id="addTimeForm" style="display:none;">
+  <h3>Add New Time Slot to Existing Agent</h3>
+  <form id="formAddTime">
+    <div class="row">
+      <label>Agent:
+        <select id="selectAgentForTime" required></select>
+      </label>
+      <!-- TIME INPUT MODE: toggle between Local and IST -->
+      <label>Input Mode:
+        <select id="timeInputMode">
+          <option value="local">Agent Local</option>
+          <option value="ist">IST</option>
+        </select>
+      </label>
+    </div>
+    <br>
+    <label>
+      New Time Slot (<span id="timeModeLabel">Agent’s Local Time</span>):
+      <input type="text" id="newTimeSlot" placeholder="HH:MM-HH:MM" required>
+    </label>
+    <div id="agentTzHelp" class="hint">Agent TZ: —</div>
+    <div id="slotPreview" class="hint">Preview: —</div>
+    <br>
+    <button class="add-btn" type="submit">Add Time Slot</button>
+  </form>
+</div>
+
+<h2>Agent Availability Timeline & Heatmap (IST)</h2>
+<div class="legend">
+  <div><span class="swatch" style="background:green"></span> Available</div>
+  <div><span class="swatch" style="background:lightgrey"></span> Offline (others available)</div>
+  <div><span class="swatch" style="background:#b30000"></span> All Offline</div>
+</div>
+<div id="dashboardContainer">
+  <div id="dashboard"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  const IST_TZ = "Asia/Kolkata";
+
+  const defaultAgents = [
+    { name: "Steven", timezone:"America/New_York", availability:[["23:00","00:30"],["01:30","03:30"],["21:00","22:00"]] },
+    { name: "Alec", timezone:"America/Los_Angeles", availability:[["22:00","23:00"],["00:30","01:30"],["03:30","07:00"]] },
+    { name: "Abhishek", timezone:"Asia/Kolkata", availability:[["19:00","21:30"],["23:00","00:30"]] },
+    { name: "Pavithran", timezone:"Asia/Kolkata", availability:[["07:30","09:00"],["13:30","15:00"]] },
+    { name: "Manju", timezone:"Asia/Kolkata", availability:[["11:30","13:30"],["15:00","16:00"]] }
+  ];
+
+  let agents = JSON.parse(localStorage.getItem("agentData")) || defaultAgents.slice();
+  let leaveStatus = JSON.parse(localStorage.getItem("leaveStatus")) || {};
+
+  function save(){ 
+    localStorage.setItem("agentData", JSON.stringify(agents)); 
+    localStorage.setItem("leaveStatus", JSON.stringify(leaveStatus)); 
+  }
+
+  function timeToMinutes(str){ const [h,m]=str.split(":").map(Number); return h*60+m; }
+  function isWithinRangeIST(nowIST, startStr, endStr){
+    let nowM = nowIST.hours()*60 + nowIST.minutes();
+    let start = timeToMinutes(startStr), end = timeToMinutes(endStr);
+    if(end <= start) end += 1440;
+    if(nowM < start) nowM += 1440;
+    return nowM >= start && nowM <= end;
+  }
+
+  function getStatus(agent){ 
+    const nowIST = moment.tz(IST_TZ);
+    const agentLocal = nowIST.clone().tz(agent.timezone);
+    const day = agentLocal.day(); // 0=Sun, 6=Sat
+    if(day === 0 || day === 6) return "offline";
+    if(leaveStatus[agent.name]) return "leave";
+    return agent.availability.some(([s,e]) => isWithinRangeIST(nowIST, s, e)) ? "online" : "offline";
+  }
+
+  function updateOnlineCount(){
+    const count = agents.filter(a => getStatus(a) === "online").length;
+    document.getElementById("onlineCount").textContent = `Agents Online: ${count}`;
+  }
+
+  // ---------- Helpers for LOCAL↔IST conversion & preview ----------
+  function parseSlotString(slotStr){
+    if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(slotStr)) return null;
+    const [s,e] = slotStr.split("-");
+    const [sh,sm] = s.split(":").map(Number);
+    const [eh,em] = e.split(":").map(Number);
+    return { sh, sm, eh, em };
+  }
+
+  function localSlotToIST(slotStr, agentTz){
+    const parsed = parseSlotString(slotStr);
+    if(!parsed) return null;
+    const { sh, sm, eh, em } = parsed;
+
+    const localStartOfDay = moment.tz(agentTz).startOf("day");
+    const sLocal = localStartOfDay.clone().add(sh, "hours").add(sm, "minutes");
+    let eLocal = localStartOfDay.clone().add(eh, "hours").add(em, "minutes");
+    if (eLocal.isSameOrBefore(sLocal)) eLocal = eLocal.add(1, "day");
+
+    const sIST = sLocal.clone().tz(IST_TZ);
+    const eIST = eLocal.clone().tz(IST_TZ);
+    return [sIST.format("HH:mm"), eIST.format("HH:mm")];
+  }
+
+  function istSlotToLocal(slotStr, agentTz){
+    const parsed = parseSlotString(slotStr);
+    if(!parsed) return null;
+    const { sh, sm, eh, em } = parsed;
+
+    const istStartOfDay = moment.tz(IST_TZ).startOf("day");
+    const sIST = istStartOfDay.clone().add(sh, "hours").add(sm, "minutes");
+    let eIST = istStartOfDay.clone().add(eh, "hours").add(em, "minutes");
+    if (eIST.isSameOrBefore(sIST)) eIST = eIST.add(1, "day");
+
+    const sLocal = sIST.clone().tz(agentTz);
+    const eLocal = eIST.clone().tz(agentTz);
+    return [sLocal.format("HH:mm"), eLocal.format("HH:mm")];
+  }
+
+  function updateAgentTzAndPreview(){
+    const sel = document.getElementById("selectAgentForTime");
+    const tzHelp = document.getElementById("agentTzHelp");
+    const preview = document.getElementById("slotPreview");
+    const input = document.getElementById("newTimeSlot");
+    const modeSel = document.getElementById("timeInputMode");
+    const modeLabel = document.getElementById("timeModeLabel");
+
+    const agent = agents.find(a => a.name === sel.value);
+    const tz = agent ? agent.timezone : "—";
+    if (tzHelp) tzHelp.textContent = `Agent TZ: ${tz}`;
+
+    // Update label text based on mode
+    if (modeLabel) modeLabel.textContent = modeSel.value === "ist" ? "IST" : "Agent’s Local Time";
+
+    if (!input || !input.value || !agent) {
+      if (preview) preview.textContent = "Preview: —";
+      return;
+    }
+
+    const raw = input.value.trim();
+    if (modeSel.value === "local") {
+      const conv = localSlotToIST(raw, agent.timezone);
+      if (conv) preview.textContent = `Preview: IST ${conv[0]}-${conv[1]}`;
+      else preview.textContent = "Preview: (enter as HH:MM-HH:MM)";
+    } else {
+      const conv = istSlotToLocal(raw, agent.timezone);
+      if (conv) preview.textContent = `Preview: ${agent.timezone} ${conv[0]}-${conv[1]}`;
+      else preview.textContent = "Preview: (enter as HH:MM-HH:MM)";
+    }
+  }
+  // ----------------------------------------------------------------
+
+  function renderTable(){
+    const tbody=document.getElementById("agentTableBody");
+    tbody.innerHTML="";
+    agents.forEach(agent=>{
+      const nowLocal = new Date(new Date().toLocaleString("en-US",{timeZone:agent.timezone}));
+      const status=getStatus(agent);
+      const tr=document.createElement("tr");
+      tr.style.background=status==="online"?"#d4edda":status==="leave"?"#fff3cd":"white";
+      const availabilityText=agent.availability.map(([s,e],i)=>
+        `${s}-${e} <span class="delete-slot" data-name="${agent.name}" data-index="${i}">×</span>`
+      ).join(", ");
+      tr.innerHTML=`<td>${agent.name}</td>
+        <td>${agent.timezone}</td>
+        <td>${nowLocal.toLocaleTimeString()}</td>
+        <td class="${status}">${status.charAt(0).toUpperCase()+status.slice(1)}</td>
+        <td style="text-align:left;">${availabilityText}</td>
+        <td>
+          <button class="leave-btn" data-name="${agent.name}">${leaveStatus[agent.name]?"Remove Leave":"Mark Leave"}</button>
+          <button class="delete-btn" data-name="${agent.name}">Delete Agent</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+
+    // wire up per-slot delete buttons
+    document.querySelectorAll(".delete-slot").forEach(span=>{
+      span.onclick=()=>{
+        const aName=span.dataset.name; 
+        const idx=parseInt(span.dataset.index,10);
+        agents.find(a=>a.name===aName).availability.splice(idx,1);
+        save(); render();
+      };
+    });
+
+    // ---------- FIXED: preserve/only-when-needed rebuild of the dropdown ----------
+    const sel = document.getElementById("selectAgentForTime");
+    const isFocused = document.activeElement === sel;
+    const prevValue = sel.value;
+
+    const currentOptions = Array.from(sel.options).map(o => o.value);
+    const changedLength = currentOptions.length !== agents.length;
+    const missingAgent = agents.some(a => !currentOptions.includes(a.name));
+    const needsRebuild = changedLength || missingAgent;
+
+    if (!isFocused && needsRebuild) {
+      sel.innerHTML = "";
+      agents.forEach(a => {
+        const opt = document.createElement("option");
+        opt.value = a.name;
+        opt.textContent = a.name;
+        sel.appendChild(opt);
+      });
+      if (prevValue && Array.from(sel.options).some(o => o.value === prevValue)) {
+        sel.value = prevValue;
+      }
+    } else if (!isFocused && !sel.value && agents.length) {
+      sel.value = agents[0].name;
+    }
+
+    // Always refresh helper label/preview
+    updateAgentTzAndPreview();
+    // ---------------------------------------------------------------------------
+  }
+
+  function buildTimeSlotsIST(){
+    const slots = [];
+    let m=moment.tz(IST_TZ).startOf("day");
+    for(let i=0;i<48;i++) slots.push(m.clone().add(30*i,"minutes").format("HH:mm"));
+    return slots;
+  }
+
+  function buildXAxisConfig(){
+    const xIndices = Array.from({length:48}, (_,i)=>i);
+    const hourTickVals = Array.from({length:25}, (_,h)=> (h*2 - 0.5));
+    const hourTickText = Array.from({length:25}, (_,h)=> String(h).padStart(2,'0') + ":00");
+    return { xIndices, hourTickVals, hourTickText };
+  }
+
+  function buildMatrix(){
+    const matrix = {};
+    const slotsIST = buildTimeSlotsIST();
+    const baseIST = moment.tz(IST_TZ).startOf("day");
+    function intervalIndices([start,end]){
+      const s = timeToMinutes(start), e = timeToMinutes(end);
+      const sIdx = Math.round(s / 30) % 48;
+      const eIdx = Math.round(e / 30) % 48;
+      return [sIdx, eIdx];
+    }
+    function markIntervals(len, intervals){
+      const arr = Array(len).fill(0);
+      intervals.forEach(([s,e])=>{
+        if(e < s){
+          for(let i=s;i<48;i++) arr[i]=1;
+          for(let i=0;i<e;i++) arr[i]=1;
+        } else {
+          for(let i=s;i<e;i++) arr[i]=1;
+        }
+      });
+      return arr;
+    }
+    agents.forEach(agent=>{
+      const intervals = agent.availability.map(intervalIndices);
+      let row = markIntervals(48, intervals);
+      for(let i=0;i<48;i++){
+        const slotIST = baseIST.clone().add(i*30,"minutes");
+        const local = slotIST.clone().tz(agent.timezone);
+        const d = local.day();
+        if(d===0||d===6) row[i]=0;
+      }
+      if(leaveStatus[agent.name]) row=row.map(()=>0);
+      matrix[agent.name]=row;
+    });
+    for(let col=0;col<48;col++){
+      const anyAvail = agents.some(a=>matrix[a.name][col]===1);
+      if(!anyAvail) agents.forEach(a=>{ matrix[a.name][col]=-1; });
+    }
+    return { matrix, slots: slotsIST };
+  }
+
+  function drawDashboard(){
+    const { xIndices, hourTickVals, hourTickText } = buildXAxisConfig();
+    const { matrix, slots } = buildMatrix();
+    const y = agents.map(a=>a.name);
+    const z = y.map(name=>matrix[name]);
+    const text = z.map((row, yi) =>
+      row.map((val, xi) => val===1 ? `Time: ${slots[xi]}<br>Agent: ${y[yi]} (Available)` : null)
+    );
+    const shapes = [];
+    for(let h=0;h<24;h++){
+      const x0=h*2-0.5,x1=(h+1)*2-0.5;
+      shapes.push({type:'rect',xref:'x',yref:'paper',x0,x1,y0:0,y1:1,
+        fillcolor:h%2===0?'#f9f9f9':'#e0e0e0',opacity:0.3,layer:'below',line:{width:0}});
+      shapes.push({type:'line',xref:'x',yref:'paper',x0,x1:x0,y0:0,y1:1,line:{color:'#bbb',width:1}});
+    }
+    const todayIST = moment.tz(IST_TZ);
+    const dIST = todayIST.day();
+    if(dIST===0||dIST===6){
+      shapes.push({type:'rect',xref:'x',yref:'paper',x0:-0.5,x1:47.5,y0:0,y1:1,
+        fillcolor:'#ffe6e6',opacity:0.25,layer:'below',line:{width:0}});
+    }
+    const minutes = todayIST.hours()*60+todayIST.minutes();
+    const currentX = (minutes/30)-0.5;
+    shapes.push({type:'line',xref:'x',yref:'paper',x0:currentX,x1:currentX,y0:0,y1:1,
+      line:{color:'red',width:2,dash:'dot'}});
+    const data=[{
+      z:z,x:xIndices,y:y,type:'heatmap',
+      zmin:-1,zmax:1,
+      colorscale:[[0.0,'#b30000'],[0.5,'lightgrey'],[1.0,'green']],
+      showscale:false,hoverongaps:false,xgap:1,ygap:1,
+      text:text,hoverinfo:'text'
+    }];
+    const layout={title:'Agent Availability Timeline (IST)',
+      xaxis:{type:'linear',range:[-0.5,47.5],tickmode:'array',
+        tickvals:hourTickVals,ticktext:hourTickText,showgrid:false,zeroline:false,showline:true},
+      yaxis:{automargin:true,autorange:'reversed',showgrid:false,zeroline:false},
+      shapes:shapes,margin:{l:100,r:40,t:50,b:70},height:500,width:2400};
+    Plotly.newPlot('dashboard',data,layout,{responsive:true});
+  }
+
+  function updateLocalTime(){
+    const now=moment.tz(IST_TZ);
+    document.getElementById("localTime").textContent=`Current IST Time: ${now.format("HH:mm:ss")}`;
+  }
+
+  function render(){ renderTable(); updateOnlineCount(); drawDashboard(); }
+
+  // TOGGLE LABELS: switch button text between Show/Hide
+  function toggleSection(btnId, sectionId, showText, hideText){
+    const btn = document.getElementById(btnId);
+    const sec = document.getElementById(sectionId);
+    const nowHidden = sec.style.display === "none";
+    sec.style.display = nowHidden ? "block" : "none";
+    btn.textContent = nowHidden ? hideText : showText;
+  }
+
+  document.getElementById("toggleAddAgent").onclick=()=>{
+    toggleSection("toggleAddAgent", "addAgentForm", "Show Add New Agent", "Hide Add New Agent");
+  };
+  document.getElementById("toggleAddTime").onclick=()=>{
+    toggleSection("toggleAddTime", "addTimeForm", "Show Add New Time Slot", "Hide Add New Time Slot");
+  };
+
+  document.getElementById("formAddAgent").onsubmit=(e)=>{
+    e.preventDefault();
+    const name=document.getElementById("newAgentName").value.trim();
+    const tz=document.getElementById("newAgentTimezone").value;
+    const raw=document.getElementById("newAgentAvailability").value.trim();
+    if(!name||!tz||!raw) return alert("Please fill all fields");
+    if(agents.some(a=>a.name.toLowerCase()===name.toLowerCase())) return alert("Agent name must be unique");
+    const slots=raw.split(",").map(s=>s.trim()).filter(Boolean);
+    const availability=[];
+    for(let s of slots){ if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(s)) return alert("Bad format"); availability.push(s.split("-")); }
+    agents.push({name,timezone:tz,availability});
+    save();render();e.target.reset();
+  };
+
+  // Add time (supports Local or IST input)
+  document.getElementById("formAddTime").onsubmit=(e)=>{
+    e.preventDefault();
+    const sel=document.getElementById("selectAgentForTime");
+    const agentName=sel.value;
+    const slot=document.getElementById("newTimeSlot").value.trim();
+    const modeSel=document.getElementById("timeInputMode");
+    if(!agentName||!slot) return alert("Please fill all fields");
+    if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(slot)) return alert("Bad format");
+    const agent=agents.find(a=>a.name===agentName);
+    if(!agent) return alert("Agent not found");
+
+    let sIST, eIST;
+    if (modeSel.value === "local") {
+      const converted = localSlotToIST(slot, agent.timezone);
+      if(!converted) return alert("Invalid time slot");
+      [sIST, eIST] = converted;
+    } else {
+      // Input already in IST; store as-is
+      const parsed = parseSlotString(slot);
+      if(!parsed) return alert("Invalid time slot");
+      [sIST, eIST] = slot.split("-");
+    }
+
+    agent.availability.push([sIST, eIST]);
+    save();render();e.target.reset();
+    updateAgentTzAndPreview();
+  };
+
+  document.addEventListener('click',(e)=>{
+    if(e.target.classList.contains('delete-btn')){
+      const name=e.target.dataset.name;
+      agents=agents.filter(a=>a.name!==name);
+      delete leaveStatus[name];save();render();
+    }
+    if(e.target.classList.contains('leave-btn')){
+      const name=e.target.dataset.name;
+      leaveStatus[name]=!leaveStatus[name];save();render();
+    }
+  });
+
+  // Live preview updates while typing / switching agents / switching mode
+  document.getElementById("newTimeSlot").addEventListener("input", updateAgentTzAndPreview);
+  document.getElementById("selectAgentForTime").addEventListener("change", updateAgentTzAndPreview);
+  document.getElementById("timeInputMode").addEventListener("change", updateAgentTzAndPreview);
+
+  // ✅ Keep live updates without breaking the dropdown selection
+  setInterval(() => {
+    updateLocalTime();
+    updateOnlineCount();
+    drawDashboard();
+    renderTable(); // dropdown is preserved; helper text refreshes too
+  }, 1000);
+
+  render();
+  // Ensure helpers are set on initial load
+  updateAgentTzAndPreview();
+});
+</script>
+</body>
+</html>
