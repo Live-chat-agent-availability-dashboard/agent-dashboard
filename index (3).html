@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <title>Agent Availability Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script><style id="plotly.js-style-global"></style><style id="plotly.js-style-global"></style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <style>
+    body { font-family: Arial, sans-serif; margin:16px; }
+    h2 { margin-top:24px; margin-bottom:6px; }
+    table { border-collapse: collapse; width:100%; margin-top:20px; }
+    th, td { border:1px solid #999; padding:10px; text-align:center; }
+    th { background-color:#f2f2f2; }
+    .time-header { margin-top:10px; font-size:16px; font-weight:bold; }
+    button { cursor:pointer; border-radius:4px; border:none; padding:6px 12px; }
+    button.delete-btn { background-color:#e74c3c; color:white; }
+    button.add-btn { background-color:#2ecc71; color:white; }
+    .toggle-btn { background-color:#3498db; color:white; margin-top:20px; padding:10px 15px; font-weight:bold; border-radius:5px; border:none; }
+    .toggle-btn:hover { background-color:#2980b9; }
+    .legend { margin:8px 0 20px; display:flex; gap:12px; align-items:center; }
+    .swatch { width:16px; height:16px; display:inline-block; border:1px solid #aaa; margin-right:6px; }
+    #dashboardContainer { overflow-x:auto; }
+    #dashboard { width:2400px; height:500px; }
+    .delete-slot { color:red; cursor:pointer; margin-left:4px; font-weight:bold; }
+    .delete-slot:hover { color:#b30000; }
+    .hint { font-size:12px; color:#555; margin:6px 0; }
+    .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    select, input[type="text"] { padding:6px 8px; }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  </style>
+<style id="plotly.js-style-modebar-fa82c1"></style><style id="plotly.js-style-modebar-e45917"></style></head>
+<body>
+
+<h2>Agent Status Table</h2>
+<div id="onlineCount" style="font-weight:bold; margin-bottom:10px;">Agents Online: 1</div>
+<div id="localTime" class="time-header">Current IST Time: 10:59:08</div>
+
+<div class="toolbar">
+  <button id="toggleAddAgent" class="toggle-btn">Hide Add New Agent</button>
+  <button id="toggleAddTime" class="toggle-btn">Hide Add New Time Slot</button>
+  <button id="exportJson" class="toggle-btn" title="Download availability.json with current data">Export JSON</button>
+  <button id="downloadHtml" class="toggle-btn" title="Download this page with current data embedded">Download Updated HTML</button>
+  <button id="useEmbedded" class="toggle-btn" title="Replace local copy with embedded seed data">Use Embedded Data</button>
+  <button id="resetLocal" class="toggle-btn" title="Clear only this app's local data">Reset Local Data</button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Agent</th>
+      <th>Time Zone</th>
+      <th>Current Time</th>
+      <th>Status</th>
+      <th style="min-width:320px;">Availability Slots (IST)</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="agentTableBody"><tr style="background: white;"><td>Steven</td>
+        <td>America/New_York</td>
+        <td>1:29:08 AM</td>
+        <td class="offline">Offline</td>
+        <td style="text-align:left;">23:00-00:30 <span class="delete-slot" data-name="Steven" data-index="0">×</span>, 01:30-03:30 <span class="delete-slot" data-name="Steven" data-index="1">×</span>, 21:00-22:00 <span class="delete-slot" data-name="Steven" data-index="2">×</span></td>
+        <td>
+          <button class="leave-btn" data-name="Steven">Mark Leave</button>
+          <button class="delete-btn" data-name="Steven">Delete Agent</button>
+        </td></tr><tr style="background: white;"><td>Alec</td>
+        <td>America/Los_Angeles</td>
+        <td>10:29:08 PM</td>
+        <td class="offline">Offline</td>
+        <td style="text-align:left;">22:00-23:00 <span class="delete-slot" data-name="Alec" data-index="0">×</span>, 00:30-01:30 <span class="delete-slot" data-name="Alec" data-index="1">×</span>, 03:30-07:00 <span class="delete-slot" data-name="Alec" data-index="2">×</span></td>
+        <td>
+          <button class="leave-btn" data-name="Alec">Mark Leave</button>
+          <button class="delete-btn" data-name="Alec">Delete Agent</button>
+        </td></tr><tr style="background: white;"><td>Abhishek</td>
+        <td>Asia/Kolkata</td>
+        <td>10:59:08 AM</td>
+        <td class="offline">Offline</td>
+        <td style="text-align:left;">19:00-21:30 <span class="delete-slot" data-name="Abhishek" data-index="0">×</span>, 23:00-00:30 <span class="delete-slot" data-name="Abhishek" data-index="1">×</span>, 02:00-03:30 <span class="delete-slot" data-name="Abhishek" data-index="2">×</span></td>
+        <td>
+          <button class="leave-btn" data-name="Abhishek">Mark Leave</button>
+          <button class="delete-btn" data-name="Abhishek">Delete Agent</button>
+        </td></tr><tr style="background: white;"><td>Pavithran</td>
+        <td>Asia/Kolkata</td>
+        <td>10:59:08 AM</td>
+        <td class="offline">Offline</td>
+        <td style="text-align:left;">14:00-15:00 <span class="delete-slot" data-name="Pavithran" data-index="0">×</span>, 16:00-18:00 <span class="delete-slot" data-name="Pavithran" data-index="1">×</span>, 20:00-21:00 <span class="delete-slot" data-name="Pavithran" data-index="2">×</span></td>
+        <td>
+          <button class="leave-btn" data-name="Pavithran">Mark Leave</button>
+          <button class="delete-btn" data-name="Pavithran">Delete Agent</button>
+        </td></tr><tr style="background: white;"><td>Manju</td>
+        <td>Asia/Kolkata</td>
+        <td>10:59:08 AM</td>
+        <td class="offline">Offline</td>
+        <td style="text-align:left;">11:30-13:30 <span class="delete-slot" data-name="Manju" data-index="0">×</span>, 15:00-16:00 <span class="delete-slot" data-name="Manju" data-index="1">×</span>, 20:00-21:00 <span class="delete-slot" data-name="Manju" data-index="2">×</span></td>
+        <td>
+          <button class="leave-btn" data-name="Manju">Mark Leave</button>
+          <button class="delete-btn" data-name="Manju">Delete Agent</button>
+        </td></tr><tr style="background: rgb(212, 237, 218);"><td>Pompi</td>
+        <td>Asia/Kolkata</td>
+        <td>10:59:08 AM</td>
+        <td class="online">Online</td>
+        <td style="text-align:left;">09:30-18:30 <span class="delete-slot" data-name="Pompi" data-index="0">×</span></td>
+        <td>
+          <button class="leave-btn" data-name="Pompi">Mark Leave</button>
+          <button class="delete-btn" data-name="Pompi">Delete Agent</button>
+        </td></tr></tbody>
+</table>
+
+<!-- Add new agent -->
+<div id="addAgentForm" style="display: block;">
+  <h3>Add New Agent</h3>
+  <form id="formAddAgent">
+    <label>Name: <input type="text" id="newAgentName" required=""></label><br><br>
+    <label>Time Zone:
+      <select id="newAgentTimezone" required="">
+        <option value="America/New_York">America/New_York</option>
+        <option value="America/Los_Angeles">America/Los_Angeles</option>
+        <option value="Asia/Kolkata">Asia/Kolkata</option>
+      </select>
+    </label><br><br>
+    <label>Availability (IST): 
+      <input type="text" id="newAgentAvailability" placeholder="e.g. 09:00-11:00, 14:00-15:30" required="">
+    </label><br><br>
+    <button class="add-btn" type="submit">Add Agent</button>
+  </form>
+</div>
+
+<!-- Add time slot -->
+<div id="addTimeForm" style="display: block;">
+  <h3>Add New Time Slot to Existing Agent</h3>
+  <form id="formAddTime">
+    <div class="row">
+      <label>Agent:
+        <select id="selectAgentForTime" required=""><option value="Steven">Steven</option><option value="Alec">Alec</option><option value="Abhishek">Abhishek</option><option value="Pavithran">Pavithran</option><option value="Manju">Manju</option><option value="Pompi">Pompi</option></select>
+      </label>
+      <label>Input Mode:
+        <select id="timeInputMode">
+          <option value="local">Agent Local</option>
+          <option value="ist">IST</option>
+        </select>
+      </label>
+    </div>
+    <br>
+    <label>
+      New Time Slot (<span id="timeModeLabel">Agent’s Local Time</span>):
+      <input type="text" id="newTimeSlot" placeholder="HH:MM-HH:MM" required="">
+    </label>
+    <div id="agentTzHelp" class="hint">Agent TZ: America/New_York</div>
+    <div id="slotPreview" class="hint">Preview: —</div>
+    <br>
+    <button class="add-btn" type="submit">Add Time Slot</button>
+  </form>
+</div>
+
+<h2>Agent Availability Timeline &amp; Heatmap (IST)</h2>
+<div class="legend">
+  <div><span class="swatch" style="background:green"></span> Available</div>
+  <div><span class="swatch" style="background:lightgrey"></span> Offline (others available)</div>
+  <div><span class="swatch" style="background:#b30000"></span> All Offline</div>
+</div>
+<div id="dashboardContainer">
+  <div id="dashboard" class="js-plotly-plot"><div class="plot-container plotly"><div class="user-select-none svg-container" style="position: relative; width: 2400px; height: 500px;"><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="2400" height="500" style="background: rgb(255, 255, 255);"><defs id="defs-e45917"><g class="clips"><clipPath id="clipe45917xyplot" class="plotclip"><rect width="2260" height="380"></rect></clipPath><clipPath class="axesclip" id="clipe45917x"><rect x="100" y="0" width="2260" height="500"></rect></clipPath><clipPath class="axesclip" id="clipe45917y"><rect x="0" y="50" width="2400" height="380"></rect></clipPath><clipPath class="axesclip" id="clipe45917xy"><rect x="100" y="50" width="2260" height="380"></rect></clipPath></g><g class="gradients"></g></defs><g class="bglayer"></g><g class="draglayer cursor-crosshair"><g class="xy"><rect class="nsewdrag drag" data-subplot="xy" x="100" y="50" width="2260" height="380" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="nwdrag drag cursor-nw-resize" data-subplot="xy" x="80" y="30" width="20" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="nedrag drag cursor-ne-resize" data-subplot="xy" x="2360" y="30" width="20" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="swdrag drag cursor-sw-resize" data-subplot="xy" x="80" y="430" width="20" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="sedrag drag cursor-se-resize" data-subplot="xy" x="2360" y="430" width="20" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="ewdrag drag cursor-ew-resize" data-subplot="xy" x="326" y="430.5" width="1808" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="wdrag drag cursor-w-resize" data-subplot="xy" x="100" y="430.5" width="226" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="edrag drag cursor-e-resize" data-subplot="xy" x="2134" y="430.5" width="226" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="nsdrag drag cursor-ns-resize" data-subplot="xy" x="79.5" y="88" width="20" height="304" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="sdrag drag cursor-s-resize" data-subplot="xy" x="79.5" y="392" width="20" height="38" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="ndrag drag cursor-n-resize" data-subplot="xy" x="79.5" y="50" width="20" height="38" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect></g></g><g class="layer-below"><g class="imagelayer"></g><g class="shapelayer"><path data-index="0" fill-rule="evenodd" d="M100,430H194.17000000000002V50H100Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="2" fill-rule="evenodd" d="M194.17000000000002,430H288.33000000000004V50H194.17000000000002Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="4" fill-rule="evenodd" d="M288.33000000000004,430H382.5V50H288.33000000000004Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="6" fill-rule="evenodd" d="M382.5,430H476.67V50H382.5Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="8" fill-rule="evenodd" d="M476.67,430H570.8299999999999V50H476.67Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="10" fill-rule="evenodd" d="M570.8299999999999,430H665V50H570.8299999999999Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="12" fill-rule="evenodd" d="M665,430H759.17V50H665Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="14" fill-rule="evenodd" d="M759.17,430H853.33V50H759.17Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="16" fill-rule="evenodd" d="M853.33,430H947.5V50H853.33Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="18" fill-rule="evenodd" d="M947.5,430H1041.67V50H947.5Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="20" fill-rule="evenodd" d="M1041.67,430H1135.83V50H1041.67Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="22" fill-rule="evenodd" d="M1135.83,430H1230V50H1135.83Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="24" fill-rule="evenodd" d="M1230,430H1324.17V50H1230Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="26" fill-rule="evenodd" d="M1324.17,430H1418.33V50H1324.17Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="28" fill-rule="evenodd" d="M1418.33,430H1512.5V50H1418.33Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="30" fill-rule="evenodd" d="M1512.5,430H1606.67V50H1512.5Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="32" fill-rule="evenodd" d="M1606.67,430H1700.83V50H1606.67Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="34" fill-rule="evenodd" d="M1700.83,430H1795V50H1700.83Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="36" fill-rule="evenodd" d="M1795,430H1889.17V50H1795Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="38" fill-rule="evenodd" d="M1889.17,430H1983.33V50H1889.17Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="40" fill-rule="evenodd" d="M1983.33,430H2077.5V50H1983.33Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="42" fill-rule="evenodd" d="M2077.5,430H2171.67V50H2077.5Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="44" fill-rule="evenodd" d="M2171.67,430H2265.83V50H2171.67Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(249, 249, 249); fill-opacity: 1; stroke-width: 0px;"></path><path data-index="46" fill-rule="evenodd" d="M2265.83,430H2360V50H2265.83Z" clip-path="url('#clipe45917x')" style="opacity: 0.3; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(224, 224, 224); fill-opacity: 1; stroke-width: 0px;"></path></g></g><g class="cartesianlayer"><g class="subplot xy"><g class="layer-subplot"><g class="shapelayer"></g><g class="imagelayer"></g></g><g class="gridlayer"><g class="x"></g><g class="y"></g></g><g class="zerolinelayer"></g><path class="xlines-below"></path><path class="ylines-below"></path><g class="overlines-below"></g><g class="xaxislayer-below"></g><g class="yaxislayer-below"></g><g class="overaxes-below"></g><g class="plot" transform="translate(100,50)" clip-path="url('#clipe45917xyplot')"><g class="heatmaplayer mlayer"><g class="hm"><image xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" height="380" width="2260" x="0" y="0" xlink:href="data:image/png;base64,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CBAgQIAAAQL5AhoSIECAAAECBAgQIECAAAECRQQeGKgp0lBMAgQIECBAgAABAgQIECBA4AEBLyVAgAABAgQIECBAgAABAgTyBTQkQODfAgZq/i3i9wQIECBAgAABAgQI1BfQgAABAgQIECBAgAABAgQIEMgX0JAAAQIECJwoYKDmRFy3JkCAAAECBAgcEXAtAQIECBAgQIAAAQIECBAgkC+gIQECBAgQIECAQA0BAzU11klKAgQIrCogFwECBAgQIECAAAECBAgQIJAvoCEBAgQIECBAgAABAgS2EzBQs92SK9waAwIECBAgQIAAAQIECBAgQCBfQEMCBAgQIECAAAECBAgQIEAgX+C8hgZqzrN1ZwIECBAgQIAAAQIECBAgcEzA1QQIECBAgAABAgQIECBAgEC+gIYECJQQMFBTYpmEJECAAAECBAgQILCugGQECBAgQIAAAQIECBAgQIBAvoCGBAgQIEBgNwEDNbutuL4ECBAgQIDAEHASIECAAAECBAgQIECAAAEC+QIaEiBAgAABAgQIELhbwEDN3XReSIAAgasFPI8AAQIECBAgQIAAAQIECBDIF9CQAAECBAgQIECAAAECBFYQ+N5+tG8lz9bay8vLt4pnj146ezuyZ1a6tvVjpTxHsvTo7cj1q13b+rFaplvz9OgVv86MzD166a81o0PFk/uc783c57n/0dq3imfrR8XcI3OP3sbbimfl7MO7cv6RveL31ZFZ9nlf44d/xdOembRnOnzF/TIy9+h+dprwd2zc53yu2vPcxx44evp8nbNvuM9zHz//VTztmXl75ujX1VWur7xnhuHI3279t57Vrmv9WC3TrXl69OFf8ezRS//s125do7OvO3r/1o+jr1nl+h79++vr61vFs2dv7Ud7K3m2fhTOXnG/jMxdvY23Fc/K2Yd35fwjeyv8+Sr7hO8TrR/2zPXfnzt74z7F/c/W3iqerR8Vc4/MPXobbyuelbMP78r5R/bx57KK55nZz/aQfc7fN3DnfvRz256xZ3baM6OrPW/Pj31w5LRn7Jkj+2VcW33PjJ//Kp7V3cfeqXhyn/M1cuyVI/bj+pXO6tmbv4uf8nfxK+3hI1laP45cv9K1PXrzn3waCk4CBAgQIECAAAECNQSkJECAAAECBAgQIECAAAECBPIFNCRAgAABAgQWEDBQs8AiiECAAAECBLIFtCNAgAABAgQIECBAgAABAgTyBTQkQIAAAQIECBAgkCVgoCZrPbUhQOBZAu5DgAABAgQIECBAgAABAgQI5AtoSIAAAQIECBAgQIAAAQIEPhAwUPMBTMV3y0yAAAECBAgQIECAAAECBAjkC2hIgAABAgQIECBAgAABAgQI5AtoOF/AQM38NZCAAAECBAgQIECAAAEC6QL6ESBAgAABAgQIECBAgAABAvkCGhIgQCBKwEBN1HIqQ4AAAQIECBAg8DwBdyJAgAABAgQIECBAgAABAgTyBTQkQIAAAQIECLwvYKDmfRfvJUCAAAECNQWkJkCAAAECBAgQIECAAAECBPIFNCRAgAABAgQIECBA4HQBAzWnE3sAAQJfCfg4AQIECBAgQIAAAQIECBAgkC+gIQECBAgQIECAAAECBAgQqCRgoOa+1fIqAgQIECBAgAABAgQIECBAIF9AQwIECBAgQIAAAQIECBAgQCBfQEMC7woYqHmXxTsJECBAgAABAgQIECBQVUBuAgQIECBAgAABAgQIECBAIF9AQwIECBA4W8BAzdnC7k+AAAECBAgQIPC1gCsIECBAgAABAgQIECBAgACBfAENCRAgQIAAAQKFBAzUFFosUQkQIEBgLQFpCBAgQIAAAQIECBAgQIAAgXwBDQkQIECAAAECBAgQ2FPAQM2e6671vgKaEyBAgAABAgQIECBAgAABAvkCGhIg2Xj/EQAAEABJREFUQIAAAQIECBAgQIAAAQIPChQYqHmwoZcTIECAAAECBAgQIECAAAECBQREJECAAAECBAgQIECAAAECBPIFNCRQR8BATZ21kpQAAQIECBAgQIAAgdUE5CFAgAABAgQIECBAgAABAgTyBTQkQIAAgS0FDNRsuexKEyBAgAABAjsL6E6AAAECBAgQIECAAAECBAjkC2hIgAABAgQIECDwmICBmsf8vJoAAQIErhHwFAIECBAgQIAAAQIECBAgQCBfQEMCBAgQIECAAAECBAgsI2CgZpmlECRPQCMCBAgQIECAAAECBAgQIEAgX0BDAgQIECBAgAABAgQIECBAIFHg14GaxIY6ESBAgAABAgQIECBAgAABAr8K+B0BAgQIECBAgAABAgQIECCQL6AhAQIPCRioeYjPiwkQIECAAAECBAgQuErAcwgQIECAAAECBAgQIECAAIF8AQ0JECBAgMAqAgZq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QIAAAQIECBAgQGBZgacN1CzbUDACBAgQIECAAAECBAgQIEDgaQJuRIAAAQIECBAgQIAAAQIECOQLaEiAQGsGauwCAgQIECBAgAABAgTSBfQjQIAAAQIECBAgQIAAAQIE8gU0JECAAAECTxUwUPNUTjcjQIAAAQIECDxLwH0IECBAgAABAgQIECBAgACBfAENCRAgQIAAAQIEVhUwULPqyshFgACBigIyEyBAgAABAgQIECBAgAABAvkCGhIgQIAAAQIECBAgQGADAQM1Gyyyip8L+CgBAgQIECBAgAABAgQIECCQL6AhAQIECBAgQIAAAQIECBAgkC/wzIYGap6p6V4ECBAgQIAAAQIECBAgQOB5Au5EgAABAgQIECBAgAABAgQI5AtoSIDAogIGahZdGLEIECBAgAABAgQI1BSQmgABAgQIECBAgAABAgQIEMgX0JAAAQIECOQLGKjJX2MNCRAgQIAAga8EfJwAAQIECBAgQIAAAQIECBDIF9CQAAECBAgQIECAwAEBAzUHsFxKgACBlQRkIUCAAAECBAgQIECAAAECBPIFNCRAgAABAgQIECBAgACBOQIGaua47/pUvQkQIECAAAECBAgQIECAAIF8AQ0JECBAgAABAgQIECBAgACBfIH4hgZq4pdYQQIECBAgQIAAAQIECBD4WsAVBAgQIECAAAECBAgQIECAQL6AhgQIELhdwEDN7VauJECAAAECBAgQILCWgDQECBAgQIAAAQIECBAgQIBAvoCGBAgQIECAwBQBAzVT2D2UAAECBAjsK6A5AQIECBAgQIAAAQIECBAgkC+gIQECBAgQIECAAIHqAgZqqq+g/AQIXCHgGQQIECBAgAABAgQIECBAgEC+gIYECBAgQIAAAQIECBAgQOBvAQM1f1Ok/UIfAgQIECBAgAABAgQIECBAIF9AQwIECBAgQIAAAQIECBAgQCBfQMMZAgZqZqh7JgECBAgQIECAAAECBHYW0J0AAQIECBAgQIAAAQIECBDIF9CQAAECxQUM1BRfQPEJECBAgAABAgSuEfAUAgQIECBAgAABAgQIECBAIF9AQwIECBAgQIDAXwIGav6S8JYAAQIECOQJaESAAAECBAgQIECAAAECBAjkC2hIgAABAgQIECBAgMAJAgZqTkB1SwIEHhHwWgIECBAgQIAAAQIECBAgQCBfQEMCBAgQIECAAAECBAgQILC2gIGaZ6yPexAgQIAAAQIECBAgQIAAAQL5AhoSIECAAAECBAgQIECAAAEC+QIaEvi/gIGa/0N4Q4AAAQIECBAgQIAAgUQBnQgQIECAAAECBAgQIECAAIF8AQ0JECBA4PkCBmqeb+qOBAgQIECAAAECjwl4NQECBAgQIECAAAECBAgQIJAvoLKhtgUAABAASURBVCEBAgQIECBAYGkBAzVLL49wBAgQIFBHQFICBAgQIECAAAECBAgQIEAgX0BDAgQIECBAgAABAgR2ETBQs8tK60ngPQHvI0CAAAECBAgQIECAAAECBPIFNCRAgAABAgQIECBAgAABAgQOC5QbqDnc0AsIECBAgAABAgQIECBAgACBcgICEyBAgAABAgQIECBAgAABAvkCGhJYWcBAzcqrIxsBAgQIECBAgAABApUEZCVAgAABAgQIECBAgAABAgTyBTQkQIAAgU0EDNRsstBqEiBAgAABAgTeF/BeAgQIECBAgAABAgQIECBAIF9AQwIECBAgQIAAgaMCBmqOirmeAAECBOYLSECAAAECBAgQIECAAAECBAjkC2hIgAABAgQIECBAgACBiQIGaibie/ReAtoSIECAAAECBAgQIECAAAEC+QIaEiBAgAABAgQIECBAgAABAhkCnw3UZDTUggABAgQIECBAgAABAgQIEPhMwMcIECBAgAABAgQIECBAgACBfAENCRA4KGCg5iCYywkQIECAAAECBAgQWEFABgIECBAgQIAAAQIECBAgQCBfQEMCBAgQIDBPwEDNPHtPJkCAAAECBHYT0JcAAQIECBAgQIAAAQIECBDIF9CQAAECBAgQIEAgQsBATcQyKkGAAIHzBNyZAAECBAgQIECAAAECBAgQyBfQkAABAgQIECBAgAABAgR+FTBQ86uH32UIaEGAAAECBAgQIECAAAECBAjkC2hIgAABAgQIECBAgAABAgQI5AtMa2igZhq9BxMgQIAAAQIECBAgQIDAfgIaEyBAgAABAgQIECBAgAABAvkCGhIgkCBgoCZhFXUgQIAAAQIECBAgcKaAexMgQIAAAQIECBAgQIAAAQL5AhoSIECAAAECvwgYqPmFw28IECBAgACBFAE9CBAgQIAAAQIECBAgQIAAgXwBDQkQIECAAAECBAicJWCg5ixZ9yVAgMBxAa8gQIAAAQIECBAg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gIGaZZZCEAIECBAgQIAAAQJ5AhoRIECAAAECBAgQIECAAAEC+QIaEiBAgACBRAEDNYmrqhMBAgQIECDwiIDXEiBAgAABAgQIECBAgAABAvkCGhIgQIAAAQIECBD4VMBAzac8PkiAAIEqAnISIECAAAECBAgQIECAAAEC+QIaEiBAgAABAgQIECBAgMBVAgZqrpL2nN8FvIcAAQIECBAgQIAAAQIECBDIF9CQAAECBAgQIECAAAECBAgQyBcIbGigJnBRVSJAgAABAgQIECBAgACBxwS8mgABAgQIECBAgAABAgQIEMgX0JAAAQKfCRio+UzHxwgQIECAAAECBAjUEZCUAAECBAgQIECAAAECBAgQyBfQkAABAgQIELhIwEDNRdAeQ4AAAQIECLwn4H0ECBAgQIAAAQIECBAgQIBAvoCGBAgQIECAAAECBOoJGKipt2YSEyAwW8DzCRAgQIAAAQIECBAgQIAAgXwBDQkQIECAAAECBAgQIEBgawEDNZssv5oECBAgQIAAAQIECBAgQIBAvoCGBAgQIECAAAECBAgQIECAQL6AhtcIGKi5xtlTCBAgQIAAAQIECBAgQOB9Ae8lQIAAAQIECBAgQIAAAQIE8gU0JECAQDkBAzXllkxgAgQIECBAgACB+QISECBAgAABAgQIECBAgAABAvkCGhIgQIAAAQI7Cxio2Xn1dSdAgACBvQS0JUCAAAECBAgQIECAAAECBPIFNCRAgAABAgQIECBA4CkCBmqewugmBAicJeC+BAgQIECAAAECBAgQIECAQL6AhgQIECBAgAABAgQIECBAYDUBAzXPXxF3JECAAAECBAgQIECAAAECBPIFNCRAgAABAgQIECBAgACIV90jAAAQAElEQVQBAgTyBTTcWMBAzcaLrzoBAgQIECBAgAABArsJ6EuAAAECBAgQIECAAAECBAjkC2hIgAABAs8QMFDzDEX3IECAAAECBAgQOE/AnQkQIECAAAECBAgQIECAAIF8AQ0JECBAgAABAosJGKhZbEHEIUCAAIEMAS0IECBAgAABAgQIECBAgACBfAENCRAgQIAAAQIECBDIFTBQk7u2mhE4KuB6AgQIECBAgAABAgQIECBAIF9AQwIECBAgQIAAAQIECBAgQOAGgeIDNTc0dAkBAgQIECBAgAABAgQIECBQXEB8AgQIECBAgAABAgQI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AQIECKwrYKBm3bWRrJqAvAQIECBAgAABAgQIECBAgEC+gIYECBAgQIAAAQIECBAgQIBAvkBvaKCmI/gfAQIECBAgQIAAAQIECBBIFtCNAAECBAgQIECAAAECBAgQyBfQkACB5woYqHmup7sRIECAAAECBAgQIPAcAXchQIAAAQIECBAgQIAAAQIE8gU0JECAAAECywoYqFl2aQQjQIAAAQIE6glITIAAAQIECBAgQIAAAQIECOQLaEiAAAECBAgQILCDgIGaHVZZRwIECHwm4GMECBAgQIAAAQIECBAgQIBAvoCGBAgQIECAAAECBAgQIHBIwEDNIS4XryIgBwECBAgQIECAAAECBAgQIJAvoCEBAgQIECBAgAABAgQIECCQL7BqQwM1q66MXAQIECBAgAABAgQIECBQUUBmAgQIECBAgAABAgQIECBAIF9AQwIENhAwULPBIqtIgAABAgQIECBA4HMBHyVAgAABAgQIECBAgAABAgTyBTQkQIAAAQIEjggYqDmi5VoCBAgQIEBgHQFJCBAgQIAAAQIECBAgQIAAgXwBDQkQIECAAAECBAhMEjBQMwneYwkQ2FNAawIECBAgQIAAAQIECBAgQCBfQEMCBAgQIECAAAECBAgQqC9goKb+Gp7dwP0JECBAgAABAgQIECBAgACBfAENCRAgQIAAAQIECBAgQIAAgXwBDQ8IGKg5gOVSAgQIECBAgAABAgQIEFhJQBYCBAgQIECAAAECBAgQIEAgX0BDAgQIzBEwUDPH3VMJECBAgAABAgR2FdCbAAECBAgQIECAAAECBAgQyBfQkAABAgQIECgvYKCm/BIqQIAAAQIEzhfwBAIECBAgQIAAAQIECBAgQCBfQEMCBAgQIECAAAECBP4RMFDzj4VfESCQJaANAQIECBAgQIAAAQIECBAgkC+gIQECBAgQIECAAAECBAgQOEXAQM0prPfe1OsIECBAgAABAgQIECBAgACBfAENCRAgQIAAAQIECBAgQIAAgXwBDasLGKipvoLyEyBAgAABAgQIECBA4AoBzyBAgAABAgQIECBAgAABAgTyBTQkQIAAgb8FDNT8TeEXBAgQIECAAAECaQL6ECBAgAABAgQIECBAgAABAvkCGhIgQIAAAQIEzhAwUHOGqnsSIECAAIH7BbySAAECBAgQIECAAAECBAgQyBfQkAABAgQIECBAgACBxQUM1Cy+QOIRqCEgJQECBAgQIECAAAECBAgQIJAvoCEBAgQIECBAgAABAgQIENhHYN+Bmn3WWFMCBAgQIECAAAECBAgQILCvgOYECBAgQIAAAQIECBAgQIBAvoCGBE4QMFBzAqpbEiBAgAABAgQIECBA4BEBryVAgAABAgQIECBAgAABAgTyBTQkQIAAgbUFDNSsvT7SESBAgAABAgSqCMhJgAABAgQIECBAgAABAgQI5AtoSIAAAQIECBDYRsBAzTZLrSgBAgQI/C7gPQQIECBAgAABAgQIECBAgEC+gIYECBAgQIAAAQIECBA4LmCg5riZVxCYK+DpBAgQIECAAAECBAgQIECAQL6AhgQIECBAgAABAgQIECBAgMBUgUsGaqY29HACBAgQIECAAAECBAgQIEDgEgEPIUCAAAECBAgQIECAAAECBPIFNCSwi4CBml1WWk8CBAgQIECAAAECBN4T8D4CBAgQIECAAAECBAgQIEAgX0BDAgQIECBwWMBAzWEyLyBAgAABAgQIzBbwfAIECBAgQIAAAQIECBAgQCBfQEMCBAgQIECAAIGZAgZqZup7NgECBHYS0JUAAQIECBAgQIAAAQIECBDIF9CQAAECBAgQIECAAAECIQIGakIWUo1zBNyVAAECBAgQIECAAAECBAgQyBfQkAABAgQIECBAgAABAgQIEMgXONrQQM1RMdcTIECAAAECBAgQIECAAIH5AhIQIECAAAECBAgQIECAAAEC+QIaEiAwUcBAzUR8jyZAgAABAgQIECCwl4C2BAgQIECAAAECBAgQIECAQL6AhgQIECBAIEPAQE3GOmpBgAABAgQInCXgvgQIECBAgAABAgQIECBAgEC+gIYECBAgQIAAAQIE/iVgoOZfIH5LgACBBAEdCBAgQIAAAQIECBAgQIAAgXwBDQkQIECAAAECBAgQIEDgPAEDNefZuvMxAVcTIECAAAECBAgQIECAAAEC+QIaEiBAgAABAgQIECBAgAABAvkCEQ0N1EQsoxIECBAgQIAAAQIECBAgcJ6AOxMgQIAAAQIECBAgQIAAAQL5AhoSIEDgVwEDNb96+B0BAgQIECBAgACBDAEtCBAgQIAAAQIECBAgQIAAgXwBDQkQIECAAIHTBAzUnEbrxgQIECBAgMBRAdcTIECAAAECBAgQIECAAAEC+QIaEiBAgAABAgQIEKggYKCmwirJSIDAygKyESBAgAABAgQIECBAgAABAvkCGhIgQIAAAQIECBAgQIDAZgIGajZb8P/V9f8ECBAgQIAAAQIECBAgQIBAvoCGBAgQIECAAAECBAgQIECAQL6AhmcJGKg5S9Z9CRAgQIAAAQIECBAgQOC4gFcQIECAAAECBAgQIECAAAEC+QIaEiBAoICAgZoCiyQiAQIECBAgQIDA2gLSESBAgAABAgQIECBAgAABAvkCGhIgQIAAAQJ7CXx/eXn5VvEcy1Qx98gs+5w9x32Ouz3PfeyBo6fP10v2zW/f/7lzv+dz9Y/WvlU8Wz8q5h6Ze/Q23lY8K2cfORSF/AAADWhJREFU3pXzj+xHP8dXuV5235+O7sWxZ9qP9q3k2foh+/Vr19lbYfejnyOrXN/6sUqWozl69Hb0NStdP/K3wnu+cvZJ++C3n/+P5mj9OPqaVa7v0ct+vso+78/B4+e/iqc9M2/PNN9Xr/8z/DBvzdf4Cf/O39m5cz/058vqe+b76+vrW8VzwFfMPTLLPmfPcZ/j/tw9f30H++Z6c3tmjjl37mMPHD3H18g/W3ureMo+Z90qu499Xjn/yN5+tLeSZ+uH7NevXWdv3Lkf2QOtH0euX+naHr2tlOdIltaPI9evdG2P3j7Ms/j3rNaPqtlH7h6/jbcVz9aPirlH5h69jbcVz9aPirlH5h69jbcVz9aPirlH5h69jbcVz9ba+Pmv4tmjt6N/t7PK9bLP+bvJyu5j71bOL7s9P/bwkdOembdn/Cefxu4783RvAgQIECBAgAABAgQIECBAIF9AQwIECBAgQIAAAQIECBAgQCBfQMOtBAzUbLXcyhIgQIAAAQIECBAgQOAfAb8iQIAAAQIECBAgQIAAAQIE8gU0JECAAIH7BAzU3OfmVQQIECBAgAABAnMEPJUAAQIECBAgQIAAAQIECBDIF9CQAAECBAgQIDBdwEDN9CUQgAABAgTyBTQkQIAAAQIECBAgQIAAAQIE8gU0JECAAAECBAgQIEAgScBATdJq6kLgmQLuRYAAAQIECBAgQIAAAQIECOQLaEiAAAECBAgQIECAAAECBAi8KxA1UPNuQ+8kQIAAAQIECBAgQIAAAQIEogSUIUCAAAECBAgQIECAAAECBPIFNCQwW8BAzewV8HwCBAgQIECAAAECBHYQ0JEAAQIECBAgQIAAAQIECBDIF9CQAAECBIIEDNQELaYqBAgQIECAAIHnCrgbAQIECBAgQIAAAQIECBAgkC+gIQECBAgQIECAwHsCBmreU/E+AgQIEKgrIDkBAgQIECBAgAABAgQIECCQL6AhAQIECBAgQIAAAQIEThYwUHMysNsTuEXANQQIECBAgAABAgQIECBAgEC+gIYECBAgQIAAAQIECBAgQIBAHYF7B2rqNJSUAAECBAgQIECAAAECBAgQuFfA6wgQIECAAAECBAgQIECAAIF8AQ0JEHhHwEDNOyjeRYAAAQIECBAgQIBAZQHZCRAgQIAAAQIECBAgQIAAgXwBDQkQIECAwLkCBmrO9XV3AgQIECBAgMBtAq4iQIAAAQIECBAgQIAAAQIE8gU0JECAAAECBAgQKCNgoKbMUglKgACB9QQkIkCAAAECBAgQIECAAAECBPIFNCRAgAABAgQIECBAgMCOAgZqdlz1vTtrT4AAAQIECBAgQIAAAQIECOQLaEiAAAECBAgQIECAAAECBAjkC5za0EDNqbxuToAAAQIECBAgQIAAAQIEbhVwHQECBAgQIECAAAECBAgQIJAvoCEBAlUEDNRUWSk5CRAgQIAAAQIECKwoIBMBAgQIECBAgAABAgQIECCQL6AhAQIECBDYUMBAzYaLrjIBAgQIENhdQH8CBAgQIECAAAECBAgQIEAgX0BDAgQIECBAgAABAo8IGKh5RM9rCRAgcJ2AJxEgQIAAAQIECBAgQIAAAQL5AhoSIECAAAECBAgQIECAwCICBmoWWYjMGFoRIECAAAECBAgQIECAAAEC+QIaEiBAgAABAgQIECBAgAABAvkC+zU0ULPfmmtMgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgACBfAENCRAg8ICAgZoH8LyUAAECBAgQIECAwJUCnkWAAAECBAgQIECAAAECBAjkC2hIgAABAgQIrCFgoGaNdZCCAAECBAikCuhFgAABAgQIECBAgAABAgQI5AtoSIAAAQIECBAgQCBOwEBN3JIqRIDA4wLuQIAAAQIECBAgQIAAAQIECOQLaEiAAAECBAgQIECAAAECBD4WMFDzsU2tj0hLgAABAgQIECBAgAABAgQI5AtoSIAAAQIECBAgQIAAAQIECOQLaLiEgIGaJZZBCAIECBAgQIAAAQIECOQKaEaAAAECBAgQIECAAAECBAjkC2hIgACBNAEDNWkrqg8BAgQIECBAgMAzBNyDAAECBAgQIECAAAECBAgQyBfQkAABAgQIECDwoYCBmg9pfIAAAQIECFQTkJcAAQIECBAgQIAAAQIECBDIF9CQAAECBAgQIECAAIErBAzUXKHsGQQIfCzgIwQIECBAgAABAgQIECBAgEC+gIYECBAgQIAAAQIECBAgQKCYgIGaOxbMSwgQIECAAAECBAgQIECAAIF8AQ0JECBAgAABAgQIECBAgACBfAENCXwkYKDmIxnvJ0CAAAECBAgQIECAQD0BiQkQIECAAAECBAgQIECAAIF8AQ0JECBA4AIBAzUXIHsEAQIECBAgQIDAZwI+RoAAAQIECBAgQIAAAQIECOQLaEiAAAECBAgQqCVgoKbWeklLgAABAqsIyEGAAAECBAgQIECAAAECBAjkC2hIgAABAgQIECBAgMC2AgZqtl16xXcU0JkAAQIECBAgQIAAAQIECBDIF9CQAAECBAgQIECAAAECBAgQeFxg9YGaxxu6AwECBAgQIECAAAECBAgQILC6gHwECBAgQIAAAQIECBAgQIBAvoCGBEoJGKgptVzCEiBAgAABAgQIECCwjoAkBAgQIECAAAECBAgQIECAQL6AhgQIECCwq4CBml1XXm8CBAgQIEBgTwGtCRAgQIAAAQIECBAgQIAAgXwBDQkQIECAAAECBB4WMFDzMKEbECBAgMDZAu5PgAABAgQIECBAgAABAgQI5AtoSIAAAQIECBAgQIAAgZUEDNSstBqyJAnoQoAAAQIECBAgQIAAAQIECOQLaEiAAAECBAgQIECAAAECBAiECvw0UBPaUC0CBAgQIECAAAECBAgQIEDgJwG/JECAAAECBAgQIECAAAECBPIFNCRA4FEBAzWPCno9AQIECBAgQIAAAQLnC3gCAQIECBAgQIAAAQIECBAgkC+gIQECBAgQWEjAQM1CiyEKAQIECBAgkCWgDQECBAgQIECAAAECBAgQIJAvoCEBAgQIECBAgECmgIGazHXVigABAvcKeB0BAgQIECBAgAABAgQIECCQL6AhAQIECBAgQIAAAQIECHwhYKDmCyAfriAgIwECBAgQIECAAAECBAgQIJAvoCEBAgQIECBAgAABAgQIECCQL7BOQwM166yFJAQIECBAgAABAgQIECCQJqAPAQIECBAgQIAAAQIECBAgkC+gIQECkQIGaiKXVSkCBAgQIECAAAEC9wt4JQECBAgQIECAAAECBAgQIJAvoCEBAgQIECDwuYCBms99fJQAAQIECBCoISAlAQIECBAgQIAAAQIECBAgkC+gIQECBAgQIECAAIHLBAzUXEbtQQQIEPi3gN8TIECAAAECBAgQIECAAAEC+QIaEiBAgAABAgQIECBAgEBFAQM1FVdtZmbPJkCAAAECBAgQIECAAAECBPIFNCRAgAABAgQIECBAgAABAgTyBTT8VMBAzac8PkiAAAECBAgQIECAAAECVQTkJECAAAECBAgQIECAAAECBPIFNCRAgMBVAgZqrpL2HAIECBAgQIAAAQK/C3gPAQIECBAgQIAAAQIECBAgkC+gIQECBAgQIFBQwEBNwUUTmQABAgQIzBXwdAIECBAgQIAAAQIECBAgQCBfQEMCBAgQIECAAAECewsYqNl7/bUnsI+ApgQIECBAgAABAgQIECBAgEC+gIYECBAgQIAAAQIECBAgQOBJAgZqngR5xm3ckwABAgQIECBAgAABAgQIEMgX0JAAAQIECBAgQIAAAQIECBDIF9CwnoCBmnprJjEBAgQIECBAgAABAgRmC3g+AQIECBAgQIAAAQIECBAgkC+gIQECBLYWMFCz9fIrT4AAAQIECBDYSUBXAgQIECBAgAABAgQIECBAIF9AQwIECBAgQIDAcwQM1DzH0V0IECBAgMA5Au5KgAABAgQIECBAgAABAgQI5AtoSIAAAQIECBAgQIDAcgIGapZbEoEI1BfQgAABAgQIECBAgAABAgQIEMgX0JAAAQIECBAgQIAAAQIECCQLGKj53+r6fwIECBAgQIAAAQIECBAgQCBfQEMCBAgQIECAAAECBAgQIEAgX0BDAk8RMFDzFEY3IUCAAAECBAgQIECAwFkC7kuAAAECBAgQIECAAAECBAjkC2hIgAABAqsJGKhZbUXkIUCAAAECBAgkCOhAgAABAgQIECBAgAABAgQI5AtoSIAAAQIECBAIFvj+8vLyreI51qRi7pFZ9jl7jvscd3ue+9gDR89Zn69Hc753vexz9jz3ee5/tPat4tn6UTH3yNyjt/G24lk5+/CunH9kbz/at5Jn64fs169dZ2/cuR/ZA60fR65f6doeva2U50iW1o8j1690bY/eVspzJEvrx5HrV7u2x2+rZbo1T+vHrdd+cl2b8bHWjxnPfcYze/T2jPvMuEfrx4znPuOZPXp7xn1m3KP1Y8Zzn/HMHn38/Ffx7NHbe39fWeF9ss/7u70K++OjjPaNffPR3vjo/faMPfPR3vjo/WPP/AcAAP//zbPwVQAAAAZJREFUAwAZ/wb+KbQ/CwAAAABJRU5ErkJggg==" style="opacity: 1;"></image></g></g></g><g class="overplot"></g><path class="xlines-above crisp" d="M100,430.5H2360" style="fill: none; stroke-width: 1px; stroke: rgb(68, 68, 68); stroke-opacity: 1;"></path><path class="ylines-above crisp" d="" style="fill: none; stroke-width: 1px; stroke: rgb(0, 0, 0); stroke-opacity: 0;"></path><g class="overlines-above"></g><g class="xaxislayer-above"><path class="xtick ticks crisp" d="M0,431v5" transform="translate(100,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(194.17000000000002,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(288.33000000000004,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(382.5,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(476.67,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(570.8299999999999,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(665,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(759.17,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(853.33,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(947.5,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1041.67,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1135.83,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1230,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1324.17,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1418.33,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1512.5,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1606.67,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1700.83,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1795,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1889.17,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(1983.33,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(2077.5,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(2171.67,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(2265.83,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xtick ticks crisp" d="M0,431v5" transform="translate(2360,0)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="00:00" data-math="N" transform="translate(100,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">00:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="01:00" data-math="N" transform="translate(194.17000000000002,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">01:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="02:00" data-math="N" transform="translate(288.33000000000004,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">02:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="03:00" data-math="N" transform="translate(382.5,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">03:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="04:00" data-math="N" transform="translate(476.67,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">04:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="05:00" data-math="N" transform="translate(570.8299999999999,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">05:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="06:00" data-math="N" transform="translate(665,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">06:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="07:00" data-math="N" transform="translate(759.17,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">07:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="08:00" data-math="N" transform="translate(853.33,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">08:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="09:00" data-math="N" transform="translate(947.5,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">09:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="10:00" data-math="N" transform="translate(1041.67,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">10:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="11:00" data-math="N" transform="translate(1135.83,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">11:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="12:00" data-math="N" transform="translate(1230,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">12:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="13:00" data-math="N" transform="translate(1324.17,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">13:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="14:00" data-math="N" transform="translate(1418.33,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">14:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="15:00" data-math="N" transform="translate(1512.5,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">15:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="16:00" data-math="N" transform="translate(1606.67,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">16:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="17:00" data-math="N" transform="translate(1700.83,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">17:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="18:00" data-math="N" transform="translate(1795,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">18:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="19:00" data-math="N" transform="translate(1889.17,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">19:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="20:00" data-math="N" transform="translate(1983.33,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">20:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="21:00" data-math="N" transform="translate(2077.5,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">21:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="22:00" data-math="N" transform="translate(2171.67,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">22:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="23:00" data-math="N" transform="translate(2265.83,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">23:00</text></g><g class="xtick"><text text-anchor="middle" x="0" y="450.4" data-unformatted="24:00" data-math="N" transform="translate(2360,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">24:00</text></g></g><g class="yaxislayer-above"><path class="ytick ticks crisp" d="M99,0h-5" transform="translate(0,398.33)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ytick ticks crisp" d="M99,0h-5" transform="translate(0,335)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ytick ticks crisp" d="M99,0h-5" transform="translate(0,271.66999999999996)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ytick ticks crisp" d="M99,0h-5" transform="translate(0,208.33)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ytick ticks crisp" d="M99,0h-5" transform="translate(0,145)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ytick ticks crisp" d="M99,0h-5" transform="translate(0,81.67)" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path><g class="ytick"><text text-anchor="end" x="91.6" y="4.199999999999999" data-unformatted="Pompi" data-math="N" transform="translate(0,398.33)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">Pompi</text></g><g class="ytick"><text text-anchor="end" x="91.6" y="4.199999999999999" data-unformatted="Manju" data-math="N" transform="translate(0,335)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">Manju</text></g><g class="ytick"><text text-anchor="end" x="91.6" y="4.199999999999999" data-unformatted="Pavithran" data-math="N" transform="translate(0,271.66999999999996)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">Pavithran</text></g><g class="ytick"><text text-anchor="end" x="91.6" y="4.199999999999999" data-unformatted="Abhishek" data-math="N" transform="translate(0,208.33)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">Abhishek</text></g><g class="ytick"><text text-anchor="end" x="91.6" y="4.199999999999999" data-unformatted="Alec" data-math="N" transform="translate(0,145)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">Alec</text></g><g class="ytick"><text text-anchor="end" x="91.6" y="4.199999999999999" data-unformatted="Steven" data-math="N" transform="translate(0,81.67)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; white-space: pre;">Steven</text></g></g><g class="overaxes-above"></g></g></g><g class="polarlayer"></g><g class="ternarylayer"></g><g class="geolayer"></g><g class="funnelarealayer"></g><g class="pielayer"></g><g class="treemaplayer"></g><g class="sunburstlayer"></g><g class="glimages"></g></svg><div class="gl-container"></div><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="2400" height="500"><defs id="topdefs-e45917"><g class="clips"></g></defs><g class="indicatorlayer"></g><g class="layer-above"><g class="imagelayer"></g><g class="shapelayer"><path data-index="1" fill-rule="evenodd" d="M100,430L100,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="3" fill-rule="evenodd" d="M194.17000000000002,430L194.17000000000002,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="5" fill-rule="evenodd" d="M288.33000000000004,430L288.33000000000004,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="7" fill-rule="evenodd" d="M382.5,430L382.5,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="9" fill-rule="evenodd" d="M476.67,430L476.67,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="11" fill-rule="evenodd" d="M570.8299999999999,430L570.8299999999999,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="13" fill-rule="evenodd" d="M665,430L665,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="15" fill-rule="evenodd" d="M759.17,430L759.17,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="17" fill-rule="evenodd" d="M853.33,430L853.33,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="19" fill-rule="evenodd" d="M947.5,430L947.5,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="21" fill-rule="evenodd" d="M1041.67,430L1041.67,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="23" fill-rule="evenodd" d="M1135.83,430L1135.83,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="25" fill-rule="evenodd" d="M1230,430L1230,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="27" fill-rule="evenodd" d="M1324.17,430L1324.17,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="29" fill-rule="evenodd" d="M1418.33,430L1418.33,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="31" fill-rule="evenodd" d="M1512.5,430L1512.5,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="33" fill-rule="evenodd" d="M1606.67,430L1606.67,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="35" fill-rule="evenodd" d="M1700.83,430L1700.83,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="37" fill-rule="evenodd" d="M1795,430L1795,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="39" fill-rule="evenodd" d="M1889.17,430L1889.17,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="41" fill-rule="evenodd" d="M1983.33,430L1983.33,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="43" fill-rule="evenodd" d="M2077.5,430L2077.5,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="45" fill-rule="evenodd" d="M2171.67,430L2171.67,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="47" fill-rule="evenodd" d="M2265.83,430L2265.83,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(187, 187, 187); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-width: 1px;"></path><path data-index="48" fill-rule="evenodd" d="M1134.26,430L1134.26,50" clip-path="url('#clipe45917x')" style="opacity: 1; stroke: rgb(255, 0, 0); stroke-opacity: 1; fill: rgb(0, 0, 0); fill-opacity: 0; stroke-dasharray: 3px, 3px; stroke-width: 2px;"></path></g></g><g class="infolayer"><g class="g-gtitle"><text class="gtitle" x="1200" y="25" text-anchor="middle" dy="0em" data-unformatted="Agent Availability Timeline (IST)" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 17px; fill: rgb(68, 68, 68); opacity: 1; font-weight: normal; white-space: pre;">Agent Availability Timeline (IST)</text></g><g class="g-xtitle"></g><g class="g-ytitle"></g></g><g class="menulayer"></g><g class="zoomlayer"></g></svg><div class="modebar-container" style="position: absolute; top: 0px; right: 0px; width: 100%;"><div id="modebar-e45917" class="modebar modebar--hover ease-bg"><div class="modebar-group"><a rel="tooltip" class="modebar-btn" data-title="Download plot as a png" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m500 450c-83 0-150-67-150-150 0-83 67-150 150-150 83 0 150 67 150 150 0 83-67 150-150 150z m400 150h-120c-16 0-34 13-39 29l-31 93c-6 15-23 28-40 28h-340c-16 0-34-13-39-28l-31-94c-6-15-23-28-40-28h-120c-55 0-100-45-100-100v-450c0-55 45-100 100-100h800c55 0 100 45 100 100v450c0 55-45 100-100 100z m-400-550c-138 0-250 112-250 250 0 138 112 250 250 250 138 0 250-112 250-250 0-138-112-250-250-250z m365 380c-19 0-35 16-35 35 0 19 16 35 35 35 19 0 35-16 35-35 0-19-16-35-35-35z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div><div class="modebar-group"><a rel="tooltip" class="modebar-btn active" data-title="Zoom" data-attr="dragmode" data-val="zoom" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m1000-25l-250 251c40 63 63 138 63 218 0 224-182 406-407 406-224 0-406-182-406-406s183-406 407-406c80 0 155 22 218 62l250-250 125 125z m-812 250l0 438 437 0 0-438-437 0z m62 375l313 0 0-312-313 0 0 312z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Pan" data-attr="dragmode" data-val="pan" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m1000 350l-187 188 0-125-250 0 0 250 125 0-188 187-187-187 125 0 0-250-250 0 0 125-188-188 186-187 0 125 252 0 0-250-125 0 187-188 188 188-125 0 0 250 250 0 0-126 187 188z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div><div class="modebar-group"><a rel="tooltip" class="modebar-btn" data-title="Zoom in" data-attr="zoom" data-val="in" data-toggle="false" data-gravity="n"><svg viewBox="0 0 875 1000" class="icon" height="1em" width="1em"><path d="m1 787l0-875 875 0 0 875-875 0z m687-500l-187 0 0-187-125 0 0 187-188 0 0 125 188 0 0 187 125 0 0-187 187 0 0-125z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Zoom out" data-attr="zoom" data-val="out" data-toggle="false" data-gravity="n"><svg viewBox="0 0 875 1000" class="icon" height="1em" width="1em"><path d="m0 788l0-876 875 0 0 876-875 0z m688-500l-500 0 0 125 500 0 0-125z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Autoscale" data-attr="zoom" data-val="auto" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m250 850l-187 0-63 0 0-62 0-188 63 0 0 188 187 0 0 62z m688 0l-188 0 0-62 188 0 0-188 62 0 0 188 0 62-62 0z m-875-938l0 188-63 0 0-188 0-62 63 0 187 0 0 62-187 0z m875 188l0-188-188 0 0-62 188 0 62 0 0 62 0 188-62 0z m-125 188l-1 0-93-94-156 156 156 156 92-93 2 0 0 250-250 0 0-2 93-92-156-156-156 156 94 92 0 2-250 0 0-250 0 0 93 93 157-156-157-156-93 94 0 0 0-250 250 0 0 0-94 93 156 157 156-157-93-93 0 0 250 0 0 250z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Reset axes" data-attr="zoom" data-val="reset" data-toggle="false" data-gravity="n"><svg viewBox="0 0 928.6 1000" class="icon" height="1em" width="1em"><path d="m786 296v-267q0-15-11-26t-25-10h-214v214h-143v-214h-214q-15 0-25 10t-11 26v267q0 1 0 2t0 2l321 264 321-264q1-1 1-4z m124 39l-34-41q-5-5-12-6h-2q-7 0-12 3l-386 322-386-322q-7-4-13-4-7 2-12 7l-35 41q-4 5-3 13t6 12l401 334q18 15 42 15t43-15l136-114v109q0 8 5 13t13 5h107q8 0 13-5t5-13v-227l122-102q5-5 6-12t-4-13z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div><div class="modebar-group"><a rel="tooltip" class="modebar-btn" data-title="Toggle Spike Lines" data-attr="_cartesianSpikesEnabled" data-val="on" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="M512 409c0-57-46-104-103-104-57 0-104 47-104 104 0 57 47 103 104 103 57 0 103-46 103-103z m-327-39l92 0 0 92-92 0z m-185 0l92 0 0 92-92 0z m370-186l92 0 0 93-92 0z m0-184l92 0 0 92-92 0z" transform="matrix(1.5 0 0 -1.5 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Show closest data on hover" data-attr="hovermode" data-val="closest" data-toggle="false" data-gravity="ne"><svg viewBox="0 0 1500 1000" class="icon" height="1em" width="1em"><path d="m375 725l0 0-375-375 375-374 0-1 1125 0 0 750-1125 0z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn active" data-title="Compare data on hover" data-attr="hovermode" data-val="x" data-toggle="false" data-gravity="ne"><svg viewBox="0 0 1125 1000" class="icon" height="1em" width="1em"><path d="m187 786l0 2-187-188 188-187 0 0 937 0 0 373-938 0z m0-499l0 1-187-188 188-188 0 0 937 0 0 376-938-1z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div><div class="modebar-group"><a href="https://plotly.com/" target="_blank" data-title="Produced with Plotly" class="modebar-btn plotlyjsicon modebar-btn--logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" height="1em" width="1em"><defs><style>.cls-1 {fill: #3f4f75;} .cls-2 {fill: #80cfbe;} .cls-3 {fill: #fff;}</style></defs><title>plotly-logomark</title><g id="symbol"><rect class="cls-1" width="132" height="132" rx="6" ry="6"></rect><circle class="cls-2" cx="78" cy="54" r="6"></circle><circle class="cls-2" cx="102" cy="30" r="6"></circle><circle class="cls-2" cx="78" cy="30" r="6"></circle><circle class="cls-2" cx="54" cy="30" r="6"></circle><circle class="cls-2" cx="30" cy="30" r="6"></circle><circle class="cls-2" cx="30" cy="54" r="6"></circle><path class="cls-3" d="M30,72a6,6,0,0,0-6,6v24a6,6,0,0,0,12,0V78A6,6,0,0,0,30,72Z"></path><path class="cls-3" d="M78,72a6,6,0,0,0-6,6v24a6,6,0,0,0,12,0V78A6,6,0,0,0,78,72Z"></path><path class="cls-3" d="M54,48a6,6,0,0,0-6,6v48a6,6,0,0,0,12,0V54A6,6,0,0,0,54,48Z"></path><path class="cls-3" d="M102,48a6,6,0,0,0-6,6v48a6,6,0,0,0,12,0V54A6,6,0,0,0,102,48Z"></path></g></svg></a></div></div></div><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="2400" height="500"><g class="hoverlayer"></g></svg></div></div></div>
+</div>
+
+<!-- Embedded seed data that ships with the file -->
+<script id="seedData" type="application/json">{
+  "agents": [
+    {
+      "name": "Steven",
+      "timezone": "America/New_York",
+      "availability": [
+        [
+          "23:00",
+          "00:30"
+        ],
+        [
+          "01:30",
+          "03:30"
+        ],
+        [
+          "21:00",
+          "22:00"
+        ]
+      ]
+    },
+    {
+      "name": "Alec",
+      "timezone": "America/Los_Angeles",
+      "availability": [
+        [
+          "22:00",
+          "23:00"
+        ],
+        [
+          "00:30",
+          "01:30"
+        ],
+        [
+          "03:30",
+          "07:00"
+        ]
+      ]
+    },
+    {
+      "name": "Abhishek",
+      "timezone": "Asia/Kolkata",
+      "availability": [
+        [
+          "19:00",
+          "21:30"
+        ],
+        [
+          "23:00",
+          "00:30"
+        ],
+        [
+          "02:00",
+          "03:30"
+        ]
+      ]
+    },
+    {
+      "name": "Pavithran",
+      "timezone": "Asia/Kolkata",
+      "availability": [
+        [
+          "14:00",
+          "15:00"
+        ],
+        [
+          "16:00",
+          "18:00"
+        ],
+        [
+          "20:00",
+          "21:00"
+        ]
+      ]
+    },
+    {
+      "name": "Manju",
+      "timezone": "Asia/Kolkata",
+      "availability": [
+        [
+          "11:30",
+          "13:30"
+        ],
+        [
+          "15:00",
+          "16:00"
+        ],
+        [
+          "20:00",
+          "21:00"
+        ]
+      ]
+    },
+    {
+      "name": "Pompi",
+      "timezone": "Asia/Kolkata",
+      "availability": [
+        [
+          "09:30",
+          "18:30"
+        ]
+      ]
+    }
+  ],
+  "leaveStatus": {
+    "Pavithran": false,
+    "Alec": false,
+    "Abhishek": false,
+    "Manju": false
+  }
+}</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  const IST_TZ = "Asia/Kolkata";
+
+  // --- Load embedded seed data ---
+  function loadSeed(){
+    try {
+      const raw = document.getElementById('seedData')?.textContent || "{}";
+      const json = JSON.parse(raw);
+      return {
+        agents: Array.isArray(json.agents) ? json.agents : [],
+        leaveStatus: json.leaveStatus || {}
+      };
+    } catch(e){
+      console.warn("Bad seed data:", e);
+      return { agents: [], leaveStatus: {} };
+    }
+  }
+
+  // --- Safe parse helper ---
+  function safeParse(str, fallback) {
+    try { const v = JSON.parse(str); return v ?? fallback; }
+    catch { return fallback; }
+  }
+
+  // --- State (prefer non-empty localStorage; else use seed) ---
+  const LS_AGENTS = "agentData";
+  const LS_LEAVE  = "leaveStatus";
+  const seed = loadSeed();
+
+  const lsAgentsRaw = localStorage.getItem(LS_AGENTS);
+  const lsLeaveRaw  = localStorage.getItem(LS_LEAVE);
+
+  let agents = (() => {
+    const parsed = safeParse(lsAgentsRaw, null);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    if (Array.isArray(seed.agents) && seed.agents.length > 0) return seed.agents.slice();
+    return [];
+  })();
+
+  let leaveStatus = (() => {
+    const parsed = safeParse(lsLeaveRaw, null);
+    if (parsed && typeof parsed === "object") return parsed;
+    return seed.leaveStatus || {};
+  })();
+
+  function saveLocal(){
+    localStorage.setItem(LS_AGENTS, JSON.stringify(agents));
+    localStorage.setItem(LS_LEAVE, JSON.stringify(leaveStatus));
+  }
+
+  // ------- time helpers -------
+  function timeToMinutes(str){ const [h,m]=str.split(":").map(Number); return h*60+m; }
+  function isWithinRangeIST(nowIST, startStr, endStr){
+    let nowM = nowIST.hours()*60 + nowIST.minutes();
+    let start = timeToMinutes(startStr), end = timeToMinutes(endStr);
+    if(end <= start) end += 1440;
+    if(nowM < start) nowM += 1440;
+    return nowM >= start && nowM <= end;
+  }
+
+  function getStatus(agent){ 
+    const nowIST = moment.tz(IST_TZ);
+    const agentLocal = nowIST.clone().tz(agent.timezone);
+    const day = agentLocal.day(); // 0=Sun, 6=Sat
+    if(day === 0 || day === 6) return "offline";
+    if(leaveStatus[agent.name]) return "leave";
+    return agent.availability.some(([s,e]) => isWithinRangeIST(nowIST, s, e)) ? "online" : "offline";
+  }
+
+  function updateOnlineCount(){
+    const count = agents.filter(a => getStatus(a) === "online").length;
+    document.getElementById("onlineCount").textContent = `Agents Online: ${count}`;
+  }
+
+  // ---------- LOCAL↔IST conversion & preview ----------
+  function parseSlotString(slotStr){
+    if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(slotStr)) return null;
+    const [s,e] = slotStr.split("-");
+    const [sh,sm] = s.split(":").map(Number);
+    const [eh,em] = e.split(":").map(Number);
+    return { sh, sm, eh, em };
+  }
+
+  function localSlotToIST(slotStr, agentTz){
+    const p = parseSlotString(slotStr); if(!p) return null;
+    const { sh, sm, eh, em } = p;
+    const localStart = moment.tz(agentTz).startOf("day");
+    const sLocal = localStart.clone().add(sh,"hours").add(sm,"minutes");
+    let eLocal = localStart.clone().add(eh,"hours").add(em,"minutes");
+    if (eLocal.isSameOrBefore(sLocal)) eLocal = eLocal.add(1, "day");
+    const sIST = sLocal.clone().tz(IST_TZ);
+    const eIST = eLocal.clone().tz(IST_TZ);
+    return [sIST.format("HH:mm"), eIST.format("HH:mm")];
+  }
+
+  function istSlotToLocal(slotStr, agentTz){
+    const p = parseSlotString(slotStr); if(!p) return null;
+    const { sh, sm, eh, em } = p;
+    const istStart = moment.tz(IST_TZ).startOf("day");
+    const sIST = istStart.clone().add(sh,"hours").add(sm,"minutes");
+    let eIST = istStart.clone().add(eh,"hours").add(em,"minutes");
+    if (eIST.isSameOrBefore(sIST)) eIST = eIST.add(1, "day");
+    const sLocal = sIST.clone().tz(agentTz);
+    const eLocal = eIST.clone().tz(agentTz);
+    return [sLocal.format("HH:mm"), eLocal.format("HH:mm")];
+  }
+
+  function updateAgentTzAndPreview(){
+    const sel = document.getElementById("selectAgentForTime");
+    const tzHelp = document.getElementById("agentTzHelp");
+    const preview = document.getElementById("slotPreview");
+    const input = document.getElementById("newTimeSlot");
+    const modeSel = document.getElementById("timeInputMode");
+    const modeLabel = document.getElementById("timeModeLabel");
+
+    const agent = agents.find(a => a.name === sel.value);
+    const tz = agent ? agent.timezone : "—";
+    if (tzHelp) tzHelp.textContent = `Agent TZ: ${tz}`;
+    if (modeLabel) modeLabel.textContent = modeSel.value === "ist" ? "IST" : "Agent’s Local Time";
+
+    if (!input || !input.value || !agent) {
+      if (preview) preview.textContent = "Preview: —";
+      return;
+    }
+
+    const raw = input.value.trim();
+    if (modeSel.value === "local") {
+      const conv = localSlotToIST(raw, agent.timezone);
+      preview.textContent = conv ? `Preview: IST ${conv[0]}-${conv[1]}` : "Preview: (enter as HH:MM-HH:MM)";
+    } else {
+      const conv = istSlotToLocal(raw, agent.timezone);
+      preview.textContent = conv ? `Preview: ${agent.timezone} ${conv[0]}-${conv[1]}` : "Preview: (enter as HH:MM-HH:MM)";
+    }
+  }
+  // ----------------------------------------------------
+
+  function renderTable(){
+    const tbody=document.getElementById("agentTableBody");
+    tbody.innerHTML="";
+    agents.forEach(agent=>{
+      const nowLocal = new Date(new Date().toLocaleString("en-US",{timeZone:agent.timezone}));
+      const status=getStatus(agent);
+      const tr=document.createElement("tr");
+      tr.style.background=status==="online"?"#d4edda":status==="leave"?"#fff3cd":"white";
+      const availabilityText=agent.availability.map(([s,e],i)=>
+        `${s}-${e} <span class="delete-slot" data-name="${agent.name}" data-index="${i}">×</span>`
+      ).join(", ");
+      tr.innerHTML=`<td>${agent.name}</td>
+        <td>${agent.timezone}</td>
+        <td>${nowLocal.toLocaleTimeString()}</td>
+        <td class="${status}">${status.charAt(0).toUpperCase()+status.slice(1)}</td>
+        <td style="text-align:left;">${availabilityText}</td>
+        <td>
+          <button class="leave-btn" data-name="${agent.name}">${leaveStatus[agent.name]?"Remove Leave":"Mark Leave"}</button>
+          <button class="delete-btn" data-name="${agent.name}">Delete Agent</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+
+    // Per-slot delete
+    document.querySelectorAll(".delete-slot").forEach(span=>{
+      span.onclick=()=>{
+        const a=agents.find(x=>x.name===span.dataset.name);
+        if(!a) return;
+        a.availability.splice(parseInt(span.dataset.index,10),1);
+        saveLocal(); render();
+      };
+    });
+
+    // Keep the dropdown synced
+    const sel = document.getElementById("selectAgentForTime");
+    const isFocused = document.activeElement === sel;
+    const prevValue = sel.value;
+
+    const currentOptions = Array.from(sel.options).map(o => o.value);
+    const changedLength = currentOptions.length !== agents.length;
+    const missingAgent = agents.some(a => !currentOptions.includes(a.name));
+    const needsRebuild = changedLength || missingAgent;
+
+    if (!isFocused && needsRebuild) {
+      sel.innerHTML = "";
+      agents.forEach(a => {
+        const opt = document.createElement("option");
+        opt.value = a.name;
+        opt.textContent = a.name;
+        sel.appendChild(opt);
+      });
+      if (prevValue && Array.from(sel.options).some(o => o.value === prevValue)) {
+        sel.value = prevValue;
+      }
+    } else if (!isFocused && !sel.value && agents.length) {
+      sel.value = agents[0].name;
+    }
+
+    updateAgentTzAndPreview();
+  }
+
+  function buildTimeSlotsIST(){
+    const slots = [];
+    let m=moment.tz(IST_TZ).startOf("day");
+    for(let i=0;i<48;i++) slots.push(m.clone().add(30*i,"minutes").format("HH:mm"));
+    return slots;
+  }
+
+  function buildXAxisConfig(){
+    const xIndices = Array.from({length:48}, (_,i)=>i);
+    const hourTickVals = Array.from({length:25}, (_,h)=> (h*2 - 0.5));
+    const hourTickText = Array.from({length:25}, (_,h)=> String(h).padStart(2,'0') + ":00");
+    return { xIndices, hourTickVals, hourTickText };
+  }
+
+  function buildMatrix(){
+    const matrix = {};
+    const baseIST = moment.tz(IST_TZ).startOf("day");
+
+    function intervalIndices([start,end]){
+      const s = timeToMinutes(start), e = timeToMinutes(end);
+      const sIdx = Math.round(s / 30) % 48;
+      const eIdx = Math.round(e / 30) % 48;
+      return [sIdx, eIdx];
+    }
+    function markIntervals(len, intervals){
+      const arr = Array(len).fill(0);
+      intervals.forEach(([s,e])=>{
+        if(e < s){
+          for(let i=s;i<48;i++) arr[i]=1;
+          for(let i=0;i<e;i++) arr[i]=1;
+        } else {
+          for(let i=s;i<e;i++) arr[i]=1;
+        }
+      });
+      return arr;
+    }
+
+    agents.forEach(agent=>{
+      const intervals = agent.availability.map(intervalIndices);
+      let row = markIntervals(48, intervals);
+      for(let i=0;i<48;i++){
+        const slotIST = baseIST.clone().add(i*30,"minutes");
+        const local = slotIST.clone().tz(agent.timezone);
+        const d = local.day();
+        if(d===0||d===6) row[i]=0;
+      }
+      if(leaveStatus[agent.name]) row=row.map(()=>0);
+      matrix[agent.name]=row;
+    });
+
+    for(let col=0;col<48;col++){
+      const anyAvail = agents.some(a=>matrix[a.name][col]===1);
+      if(!anyAvail) agents.forEach(a=>{ matrix[a.name][col]=-1; });
+    }
+    return matrix;
+  }
+
+  function drawDashboard(){
+    const { xIndices, hourTickVals, hourTickText } = buildXAxisConfig();
+    const matrix = buildMatrix();
+    const y = agents.map(a=>a.name);
+    const z = y.map(name=>matrix[name]);
+    const slotsIST = buildTimeSlotsIST();
+    const text = z.map((row, yi) =>
+      row.map((val, xi) => val===1 ? `Time: ${slotsIST[xi]}<br>Agent: ${y[yi]} (Available)` : null)
+    );
+
+    const shapes = [];
+    for(let h=0;h<24;h++){
+      const x0=h*2-0.5,x1=(h+1)*2-0.5;
+      shapes.push({type:'rect',xref:'x',yref:'paper',x0,x1,y0:0,y1:1,
+        fillcolor:h%2===0?'#f9f9f9':'#e0e0e0',opacity:0.3,layer:'below',line:{width:0}});
+      shapes.push({type:'line',xref:'x',yref:'paper',x0,x1:x0,y0:0,y1:1,line:{color:'#bbb',width:1}});
+    }
+    const todayIST = moment.tz(IST_TZ);
+    const minutes = todayIST.hours()*60+todayIST.minutes();
+    const currentX = (minutes/30)-0.5;
+    shapes.push({type:'line',xref:'x',yref:'paper',x0:currentX,x1:currentX,y0:0,y1:1,
+      line:{color:'red',width:2,dash:'dot'}});
+
+    const data=[{
+      z:z,x:xIndices,y:y,type:'heatmap',
+      zmin:-1,zmax:1,
+      colorscale:[[0.0,'#b30000'],[0.5,'lightgrey'],[1.0,'green']],
+      showscale:false,hoverongaps:false,xgap:1,ygap:1,
+      text:text,hoverinfo:'text'
+    }];
+    const layout={title:'Agent Availability Timeline (IST)',
+      xaxis:{type:'linear',range:[-0.5,47.5],tickmode:'array',
+        tickvals:hourTickVals,ticktext:hourTickText,showgrid:false,zeroline:false,showline:true},
+      yaxis:{automargin:true,autorange:'reversed',showgrid:false,zeroline:false},
+      shapes:shapes,margin:{l:100,r:40,t:50,b:70},height:500,width:2400};
+    Plotly.newPlot('dashboard',data,layout,{responsive:true});
+  }
+
+  function updateLocalTime(){
+    const now=moment.tz(IST_TZ);
+    document.getElementById("localTime").textContent=`Current IST Time: ${now.format("HH:mm:ss")}`;
+  }
+
+  function render(){ renderTable(); updateOnlineCount(); drawDashboard(); }
+
+  // UI toggles
+  function toggleSection(btnId, sectionId, showText, hideText){
+    const btn = document.getElementById(btnId);
+    const sec = document.getElementById(sectionId);
+    const nowHidden = sec.style.display === "none";
+    sec.style.display = nowHidden ? "block" : "none";
+    btn.textContent = nowHidden ? hideText : showText;
+  }
+  document.getElementById("toggleAddAgent").onclick=()=>toggleSection("toggleAddAgent","addAgentForm","Show Add New Agent","Hide Add New Agent");
+  document.getElementById("toggleAddTime").onclick=()=>toggleSection("toggleAddTime","addTimeForm","Show Add New Time Slot","Hide Add New Time Slot");
+
+  // Add agent
+  document.getElementById("formAddAgent").onsubmit=(e)=>{
+    e.preventDefault();
+    const name=document.getElementById("newAgentName").value.trim();
+    const tz=document.getElementById("newAgentTimezone").value;
+    const raw=document.getElementById("newAgentAvailability").value.trim();
+    if(!name||!tz||!raw) return alert("Please fill all fields");
+    if(agents.some(a=>a.name.toLowerCase()===name.toLowerCase())) return alert("Agent name must be unique");
+    const slots=raw.split(",").map(s=>s.trim()).filter(Boolean);
+    const availability=[];
+    for(let s of slots){ if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(s)) return alert("Bad slot format"); availability.push(s.split("-")); }
+    agents.push({name,timezone:tz,availability});
+    saveLocal(); render(); e.target.reset();
+  };
+
+  // Add time slot
+  document.getElementById("formAddTime").onsubmit=(e)=>{
+    e.preventDefault();
+    const sel=document.getElementById("selectAgentForTime");
+    const agentName=sel.value;
+    const slot=document.getElementById("newTimeSlot").value.trim();
+    const modeSel=document.getElementById("timeInputMode");
+    if(!agentName||!slot) return alert("Please fill all fields");
+    if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(slot)) return alert("Bad format");
+    const agent=agents.find(a=>a.name===agentName);
+    if(!agent) return alert("Agent not found");
+
+    let sIST, eIST;
+    if (modeSel.value === "local") {
+      const converted = localSlotToIST(slot, agent.timezone);
+      if(!converted) return alert("Invalid time slot");
+      [sIST, eIST] = converted;
+    } else {
+      const parsed = parseSlotString(slot);
+      if(!parsed) return alert("Invalid time slot");
+      [sIST, eIST] = slot.split("-");
+    }
+
+    agent.availability.push([sIST, eIST]);
+    saveLocal(); render(); e.target.reset();
+    updateAgentTzAndPreview();
+  };
+
+  // Row actions: delete agent / toggle leave
+  document.addEventListener('click',(e)=>{
+    if(e.target.classList.contains('delete-btn')){
+      const name=e.target.dataset.name;
+      agents=agents.filter(a=>a.name!==name);
+      delete leaveStatus[name];
+      saveLocal(); render();
+    }
+    if(e.target.classList.contains('leave-btn')){
+      const name=e.target.dataset.name;
+      leaveStatus[name]=!leaveStatus[name];
+      saveLocal(); render();
+    }
+  });
+
+  // Live preview updates
+  document.getElementById("newTimeSlot").addEventListener("input", updateAgentTzAndPreview);
+  document.getElementById("selectAgentForTime").addEventListener("change", updateAgentTzAndPreview);
+  document.getElementById("timeInputMode").addEventListener("change", updateAgentTzAndPreview);
+
+  // Reset local (does not touch embedded seed data)
+  document.getElementById("resetLocal").onclick = () => {
+    if (confirm("Clear local edits? (This only clears your browser’s copy)")) {
+      localStorage.removeItem(LS_AGENTS);
+      localStorage.removeItem(LS_LEAVE);
+      location.reload();
+    }
+  };
+
+  // Force use of embedded seed
+  document.getElementById("useEmbedded").onclick = () => {
+    const seedNow = loadSeed();
+    agents = seedNow.agents.slice();
+    leaveStatus = { ...(seedNow.leaveStatus || {}) };
+    saveLocal();
+    location.reload();
+  };
+
+  // Export JSON snapshot
+  document.getElementById("exportJson").onclick = () => {
+    const data = { agents, leaveStatus };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'availability.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  // Download Updated HTML (embeds current data inside #seedData and downloads a new self-contained file)
+  document.getElementById("downloadHtml").onclick = () => {
+    const html = buildUpdatedHtml();
+    const blob = new Blob([html], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'index.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  // Replace the #seedData JSON in the current document and serialize HTML
+  function buildUpdatedHtml(){
+    const doc = document.documentElement.cloneNode(true);
+    const seedEl = doc.querySelector('#seedData');
+    const latest = JSON.stringify({ agents, leaveStatus }, null, 2);
+    if (seedEl) seedEl.textContent = latest;
+    return "<!DOCTYPE html>\n" + doc.outerHTML;
+  }
+
+  // Tickers
+  setInterval(() => { updateLocalTime(); updateOnlineCount(); drawDashboard(); renderTable(); }, 1000);
+
+  // Initial render
+  render();
+  updateAgentTzAndPreview();
+  updateLocalTime();
+});
+</script>
+
+
+<svg id="js-plotly-tester" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position: absolute; left: -10000px; top: -10000px; width: 9000px; height: 9000px; z-index: 1;"><path class="js-reference-point" d="M0,0H1V1H0Z" style="stroke-width: 0; fill: black;"></path></svg></body></html>
